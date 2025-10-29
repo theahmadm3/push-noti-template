@@ -28,13 +28,15 @@ export async function subscribeToPushNotifications(
   registration: ServiceWorkerRegistration
 ): Promise<PushSubscription | null> {
   try {
+    const vapidKey = urlBase64ToUint8Array(
+      // This is a public VAPID key - in production, you should get this from your backend
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 
+      'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8-fC3K99nkD4t7kBZYQXBPJE9aOH-mUkpnqP3rW6zqNBPTBuUQWlQk'
+    );
+    
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        // This is a public VAPID key - in production, you should get this from your backend
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 
-        'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8-fC3K99nkD4t7kBZYQXBPJE9aOH-mUkpnqP3rW6zqNBPTBuUQWlQk'
-      ),
+      applicationServerKey: vapidKey as BufferSource,
     });
 
     const subscriptionJSON = subscription.toJSON() as unknown as PushSubscription;
@@ -89,7 +91,7 @@ export async function sendTestNotification(message: string): Promise<boolean> {
 }
 
 // Helper function to convert base64 string to Uint8Array
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
     .replace(/\-/g, '+')
@@ -101,5 +103,5 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray as Uint8Array<ArrayBuffer>;
+  return outputArray;
 }
